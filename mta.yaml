@@ -1,0 +1,90 @@
+_schema-version: "3.2"
+ID: WF-custom-ui
+version: 0.0.1
+modules:
+- name: workflow
+  type: com.sap.application.content
+  path: workflow
+  requires:
+  - name: workflow_mta
+    parameters:
+      content-target: true
+- name: wf-custom-ui-approuter
+  type: approuter.nodejs
+  path: wf-custom-ui-approuter
+  requires:
+  - name: WF-custom-ui_html_repo_runtime
+  - name: uaa_WF-custom-ui
+  - name: portal_resources_WF-custom-ui
+  - name: workflow_mta
+  parameters:
+    disk-quota: 256M
+    memory: 256M
+- name: WF-custom-ui_ui_deployer
+  type: com.sap.application.content
+  path: .
+  requires:
+  - name: WF-custom-ui_html_repo_host
+    parameters:
+      content-target: true
+  build-parameters:
+    build-result: resources
+    requires:
+    - artifacts:
+      - customUI-content.zip
+      name: customUI
+      target-path: resources/
+- name: customUI
+  type: html5
+  path: customUI
+  build-parameters:
+    builder: custom
+    commands:
+    - npm run build
+    supported-platforms: []
+- name: flp
+  type: com.sap.portal.content
+  path: flp
+  requires:
+  - name: portal_resources_WF-custom-ui
+  - name: WF-custom-ui_html_repo_host
+  - name: WF-custom-ui_ui_deployer
+  - name: uaa_WF-custom-ui
+  - name: workflow_mta
+  parameters:
+    buildpack: https://github.com/cloudfoundry/nodejs-buildpack/releases/download/v1.6.51/nodejs-buildpack-cflinuxfs3-v1.6.51.zip
+    memory: 128M
+    stack: cflinuxfs3
+resources:
+- name: workflow_mta
+  type: org.cloudfoundry.managed-service
+  parameters:
+    service: workflow
+    service-plan: lite
+- name: WF-custom-ui_html_repo_runtime
+  type: org.cloudfoundry.managed-service
+  parameters:
+    service: html5-apps-repo
+    service-plan: app-runtime
+- name: WF-custom-ui_html_repo_host
+  type: org.cloudfoundry.managed-service
+  parameters:
+    service: html5-apps-repo
+    service-plan: app-host
+- name: uaa_WF-custom-ui
+  type: org.cloudfoundry.managed-service
+  parameters:
+    path: ./xs-security.json
+    service: xsuaa
+    service-name: WF-custom-ui-xsuaa-service
+    service-plan: application
+- name: portal_resources_WF-custom-ui
+  type: org.cloudfoundry.managed-service
+  parameters:
+    service: portal
+    service-plan: standard
+build-parameters:
+  before-all:
+  - builder: custom
+    commands:
+    - npm install
