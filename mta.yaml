@@ -81,7 +81,7 @@ resources:
 - name: portal_resources_WF-custom-ui
   type: org.cloudfoundry.managed-service
   parameters:
-    service: portal
+    service: SAPLaunchpad
     service-plan: standard
 build-parameters:
   before-all:
